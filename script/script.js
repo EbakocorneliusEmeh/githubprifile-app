@@ -1,47 +1,74 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+const suggestionList = ['torvalds', 'gaearon', 'sindresorhus', 'octocat', 'mojombo'];
 
-const FoodContext = createContext();
+function searchSuggestions() {
+  const input = document.getElementById('username').value.trim().toLowerCase();
+  const suggestions = document.getElementById('suggestions');
+  suggestions.innerHTML = '';
 
-export const FoodProvider = ({ children }) => {
-  const [foods, setFoods] = useState([]);
-  const [cart, setCart] = useState([]);
+  if (!input) return;
 
- 
-  useEffect(() => {
-    const storedFoods = localStorage.getItem('foods');
-    const storedCart = localStorage.getItem('cart');
-    const dummyFoods = [
-      { id: 1, name: 'Burger', description: 'Tasty beef burger', calories: 500, price: 8 },
-      { id: 2, name: 'Pizza', description: 'Cheesy pepperoni pizza', calories: 700, price: 12 },
-    ];
-    setFoods(storedFoods ? JSON.parse(storedFoods) : dummyFoods);
-    setCart(storedCart ? JSON.parse(storedCart) : []);
-  }, []);
+  suggestionList.forEach(name => {
+    if (name.includes(input)) {
+      const li = document.createElement('li');
+      li.textContent = name;
 
-  
-  useEffect(() => {
-    localStorage.setItem('foods', JSON.stringify(foods));
-  }, [foods]);
+      li.addEventListener('click', () => {
+        if (confirm(`Search for ${name}?`)) {
+          document.getElementById('username').value = name;
+          suggestions.innerHTML = '';
+          fetchProfile();
+        }
+      });
 
-  useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(cart));
-  }, [cart]);
-
-  const addToCart = (food) => setCart([...cart, food]);
-  const clearCart = () => setCart([]);
-
-  const deleteFood = (id) => {
-    const confirmDelete = window.confirm('Are you sure you want to delete this food item?');
-    if (confirmDelete) {
-      setFoods(foods.filter(f => f.id !== id));
+      suggestions.appendChild(li);
     }
-  };
+  });
+}
 
-  return (
-    <FoodContext.Provider value={{ foods, setFoods, cart, addToCart, clearCart, deleteFood, setCart }}>
-      {children}
-    </FoodContext.Provider>
-  );
-};
+async function fetchProfile() {
+  const username = document.getElementById('username').value.trim();
+  const profileDiv = document.getElementById('profile');
+  document.getElementById('suggestions').innerHTML = '';
 
-export const useFood = () => useContext(FoodContext);
+  if (!username) {
+    profileDiv.innerHTML = `<p class="error-message">Please enter a GitHub username.</p>`;
+    return;
+  }
+
+  const url = `https://api.github.com/users/${username}`;
+
+  try {
+    profileDiv.innerHTML = `<p>Loading...</p>`;
+    const response = await fetch(url);
+
+    if (response.ok) {
+      const data = await response.json();
+      renderProfile(data);
+    } else {
+      throw new Error({
+        404: 'User not found. Please check the username.',
+        403: 'Rate limit exceeded. Try again later.'
+      }[response.status] || 'An unknown error occurred.');
+    }
+  } catch (error) {
+    profileDiv.innerHTML = `<p class="error-message">${error.message}</p>`;
+  }
+}
+
+function renderProfile(data) {
+  const profileDiv = document.getElementById('profile');
+
+  const displayName = data.name || data.login;
+  const displayBio = data.bio || 'No bio available';
+
+  profileDiv.innerHTML = `
+    <div class="profile-card">
+      <img src="${data.avatar_url}" alt="${data.login}" />
+      <h2>${displayName}</h2>
+      <p>${displayBio}</p>
+      <p>Followers: ${data.followers} | Following: ${data.following}</p>
+      <p>Public Repos: ${data.public_repos}</p>
+      <a href="${data.html_url}" target="_blank">Visit GitHub Profile</a>
+    </div>
+  `;
+}
