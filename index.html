@@ -1,11 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Githubprifile</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GitHub Profile app</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="stylesheet" href="styles/styles.css">
 </head>
 <body>
-    
+  <h1><i class="fab fa-github"></i> GitHub Profile Viewer</h1>
+  <div class="search-container">
+    <div class="autocomplete">
+      <input type="text" id="username" placeholder="Enter GitHub username" oninput="searchSuggestions()" />
+      <ul id="suggestions"></ul>
+    </div>
+    <button onclick="fetchProfile()">Search</button>
+  </div>
+  <div id="profile"></div>
+
+  <script src="./script/script.js"></script>
 </body>
 </html>
